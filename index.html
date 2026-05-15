@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Editor</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Fixed selectors matching the CSS structure */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1e1e1e;
+            color: #cccccc;
+            overflow: hidden;
+        }
+
+        .frontpage {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            width: 48px;
+            background-color: #333333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 10px;
+        }
+
+        .toolbar .icon {
+            padding: 15px 0;
+            font-size: 20px;
+            cursor: pointer;
+            opacity: 0.5;
+            width: 100%;
+            text-align: center;
+            transition: opacity 0.2s;
+            user-select: none;
+        }
+
+        .toolbar .icon:hover {
+            opacity: 0.8;
+        }
+
+        .toolbar .icon.active {
+            opacity: 1;
+            border-left: 2px solid white;
+        }
+
+        /* Sidebar */
+        .task-bar {
+            width: 200px;
+            background-color: #252526;
+            padding: 10px;
+            font-size: 11px;
+            overflow-y: auto;
+        }
+
+        .task-bar .title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #bbbbbb;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-size: 10px;
+        }
+
+        .task-bar .folder {
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #bbbbbb;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .task-bar .folder:hover {
+            color: #ffffff;
+        }
+
+        .task-bar .file {
+            padding: 2px 0 2px 20px;
+            cursor: pointer;
+            color: #cccccc;
+            transition: background 0.1s;
+            border-radius: 3px;
+        }
+
+        .task-bar .file:hover {
+            background-color: #2a2d2e;
+            color: #ffffff;
+        }
+
+        .task-bar .file.active {
+            background-color: #37373d;
+            color: #ffffff;
+        }
+
+        /* Main editor area */
+        .main-page {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #1e1e1e;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background-color: #2d2d2d;
+            border-bottom: 1px solid #1e1e1e;
+            height: 35px;
+            align-items: flex-end;
+        }
+
+        .tab {
+            padding: 6px 14px;
+            font-size: 12px;
+            cursor: pointer;
+            color: #969696;
+            background-color: #2d2d2d;
+            border-right: 1px solid #1e1e1e;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            height: 100%;
+            box-sizing: border-box;
+        }
+
+        .tab.active {
+            color: #cccccc;
+            background-color: #1e1e1e;
+            border-top: 1px solid #007acc;
+        }
+
+        .tab .close {
+            opacity: 0;
+            font-size: 14px;
+            line-height: 1;
+        }
+
+        .tab:hover .close {
+            opacity: 1;
+        }
+
+        /* Editor body */
+        .editor-body {
+            display: flex;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        .line-numbers {
+            padding: 16px 10px;
+            color: #5a5a5a;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            text-align: right;
+            user-select: none;
+            min-width: 40px;
+            background-color: #1e1e1e;
+        }
+
+        .code-area {
+            flex-grow: 1;
+            padding: 16px 0 16px 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            overflow: auto;
+            white-space: pre;
+            outline: none;
+        }
+
+        /* Syntax colors */
+        .kw  { color: #569cd6; }
+        .fn  { color: #dcdcaa; }
+        .str { color: #ce9178; }
+        .cm  { color: #6a9955; }
+        .num { color: #b5cea8; }
+        .tag { color: #4ec9b0; }
+
+        /* Status bar */
+        .status-bar {
+            height: 22px;
+            background-color: #007acc;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            font-size: 11px;
+            color: white;
+            gap: 16px;
+        }
+
+        .status-bar .right {
+            margin-left: auto;
+            display: flex;
+            gap: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="frontpage">
+
+    <!-- Toolbar (activity bar) -->
+    <div class="toolbar">
+        <div class="icon active" title="Explorer">&#9776;</div>
+        <div class="icon" title="Search">&#128269;</div>
+        <div class="icon" title="Git">&#11835;</div>
+        <div class="icon" title="Extensions">&#10697;</div>
+        <div class="icon" style="margin-top:auto; margin-bottom:10px;" title="Settings">&#9881;</div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="task-bar">
+        <div class="title">Explorer</div>
+
+        <div class="folder">&#9660; MY PROJECT</div>
+
+        <div class="folder" style="padding-left:10px;">&#9660; src</div>
+        <div class="file active">&#128196; index.html</div>
+        <div class="file">&#127912; style.css</div>
+        <div class="file">&#128196; app.js</div>
+
+        <div class="folder" style="padding-left:10px; margin-top:6px;">&#9660; assets</div>
+        <div class="file">&#128444; logo.png</div>
+        <div class="file">&#128444; banner.jpg</div>
+
+        <div class="folder" style="margin-top:6px;">&#128196; README.md</div>
+    </div>
+
+    <!-- Main editor -->
+    <div class="main-page">
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <div class="tab active">
+                &#128196; index.html
+                <span class="close">&#10005;</span>
+            </div>
+            <div class="tab">
+                &#127912; style.css
+                <span class="close">&#10005;</span>
+            </div>
+        </div>
+
+        <!-- Code editor -->
+        <div class="editor-body">
+            <div class="line-numbers" id="lineNums"></div>
+            <div class="code-area" contenteditable="true" spellcheck="false" id="editor">
+<span class="cm">&lt;!-- index.html --&gt;</span>
+<span class="tag">&lt;!DOCTYPE</span> <span class="kw">html</span><span class="tag">&gt;</span>
+<span class="tag">&lt;html</span> <span class="fn">lang</span>=<span class="str">"en"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;head&gt;</span>
+  <span class="tag">&lt;meta</span> <span class="fn">charset</span>=<span class="str">"UTF-8"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;title&gt;</span>My App<span class="tag">&lt;/title&gt;</span>
+  <span class="tag">&lt;link</span> <span class="fn">rel</span>=<span class="str">"stylesheet"</span> <span class="fn">href</span>=<span class="str">"style.css"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;/head&gt;</span>
+<span class="tag">&lt;body&gt;</span>
+
+  <span class="tag">&lt;div</span> <span class="fn">class</span>=<span class="str">"frontpage"</span><span class="tag">&gt;</span>
+    <span class="cm">&lt;!-- Your content here --&gt;</span>
+    <span class="tag">&lt;h1&gt;</span>Hello, World!<span class="tag">&lt;/h1&gt;</span>
+  <span class="tag">&lt;/div&gt;</span>
+
+<span class="tag">&lt;/body&gt;</span>
+<span class="tag">&lt;/html&gt;</span>
+            </div>
+        </div>
+
+        <!-- Status bar -->
+        <div class="status-bar">
+            <span>&#10003; main</span>
+            <span>&#9888; 0 &nbsp; &#9432; 0</span>
+            <div class="right">
+                <span>Ln 1, Col 1</span>
+                <span>UTF-8</span>
+                <span>HTML</span>
+                <span>Spaces: 2</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // Generate line numbers based on editor content
+    function updateLineNumbers() {
+        const editor = document.getElementById('editor');
+        const lineNums = document.getElementById('lineNums');
+        const lines = editor.innerText.split('\n').length;
+        lineNums.innerHTML = Array.from({length: lines}, (_, i) => i + 1).join('<br>');
+    }
+
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+        });
+    });
+
+    // Sidebar file switching
+    document.querySelectorAll('.task-bar .file').forEach(file => {
+        file.addEventListener('click', () => {
+            document.querySelectorAll('.task-bar .file').forEach(f => f.classList.remove('active'));
+            file.classList.add('active');
+        });
+    });
+
+    // Toolbar icon switching
+    document.querySelectorAll('.toolbar .icon').forEach(icon => {
+        icon.addEventListener('click', () => {
+            document.querySelectorAll('.toolbar .icon').forEach(i => i.classList.remove('active'));
+            icon.classList.add('active');
+        });
+    });
+
+    // Update cursor position in status bar
+    document.getElementById('editor').addEventListener('keyup', (e) => {
+        updateLineNumbers();
+        const sel = window.getSelection();
+        if (sel.rangeCount) {
+            const range = sel.getRangeAt(0);
+            const text = range.startContainer.textContent.substring(0, range.startOffset);
+            const col = text.length + 1;
+            document.querySelector('.status-bar .right').children[0].textContent = `Ln ?, Col ${col}`;
+        }
+    });
+
+    updateLineNumbers();
+</script>
+
+</body>
+</html>
